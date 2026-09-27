@@ -144,31 +144,3 @@ MOG2 and chroma key remain available:
 ```
 
 For same-color foreground/background footage, use `--method rvm`.
-
-## License note
-
-This repository's own code can retain its existing license, but the GPU image downloads **Robust Video Matting**, whose current upstream repository is GPL-3.0. If you plan to redistribute a built image or use it in a licensing-sensitive product, review the upstream license obligations first.
-
-## Anamorphic / wrong aspect ratio sources
-
-Some camera formats store a non-square raster such as `1280x1080` but are intended
-to be displayed as `16:9`. The application now probes geometry with the broadly
-compatible `ffprobe -show_streams` path. If the source metadata is missing or an
-older ffprobe still cannot expose it, override the intended display ratio explicitly:
-
-```bash
-docker compose \
-  -f docker-compose.yml \
-  -f docker-compose.gpu.yml \
-  run --rm service \
-  /data/input.mp4 /data/preview.mp4 \
-  --method rvm \
-  --accelerator cuda \
-  --background green \
-  --downsample-ratio 0.4 \
-  --display-aspect 16:9
-```
-
-For a decoded `1280x1080` raster, `--display-aspect 16:9` produces a square-pixel
-`1920x1080` output instead of preserving the distorted `1280x1080` display shape.
-Use the actual intended ratio of the source if it is not 16:9.
