@@ -1,0 +1,50 @@
+FROM pytorch/pytorch:2.8.0-cuda12.6-cudnn9-runtime
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG RVM_REF=master
+
+ENV PYTHONUNBUFFERED=1 \
+    NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility,video \
+    RVM_REPO=/opt/RobustVideoMatting \
+    RVM_MODEL_PATH=/models/rvm_mobilenetv3.pth
+
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        ffmpeg \
+        git \
+        sudo; \
+    rm -rf /var/lib/apt/lists/*
+
+# OpenCV remains responsible for video I/O and compositing. PyTorch/CUDA runs the
+# semantic human-matting network, which is the expensive part.
+RUN python -m pip install --no-cache-dir \
+        opencv-python-headless==4.13.0.92 \
+        numpy==2.4.3
+
+RUN set -eux; \
+    git clone --depth 1 --branch "$RVM_REF" \
+        https://github.com/PeterL1n/RobustVideoMatting.git /opt/RobustVideoMatting; \
+    mkdir -p /models; \
+    curl -fL \
+        https://github.com/PeterL1n/RobustVideoMatting/releases/download/v1.0.0/rvm_mobilenetv3.pth \
+        -o /models/rvm_mobilenetv3.pth
+
+ARG HOST_USERNAME=user
+ARG HOST_GROUPNAME=group
+ARG HOST_UID=1000
+ARG HOST_GID=1000
+
+RUN groupadd -g "$HOST_GID" "$HOST_GROUPNAME" && \
+    useradd -m -s /bin/bash -u "$HOST_UID" -g "$HOST_GID" "$HOST_USERNAME" && \
+    usermod -aG sudo "$HOST_USERNAME" && \
+    echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+WORKDIR /app
+COPY app /app
+
+USER $HOST_USERNAME
+CMD ["python", "/app/main.py", "--help"]

@@ -1,0 +1,16 @@
+FROM python:3.12-bookworm
+
+ENV PYTHONUNBUFFERED=1
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends ffmpeg; \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /root
+COPY requirements.txt requirements.test.txt pytest.ini pyproject.toml ./
+RUN python -m pip install --upgrade pip setuptools wheel
+RUN pip install --no-cache-dir -r requirements.txt -r requirements.test.txt
+
+WORKDIR /

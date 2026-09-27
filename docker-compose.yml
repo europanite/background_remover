@@ -1,0 +1,16 @@
+services:
+  service:
+    build:
+      context: ./service/
+      args:
+        HOST_UID: ${HOST_UID:-1000}
+        HOST_GID: ${HOST_GID:-1000}
+        HOST_USERNAME: ${HOST_USERNAME:-user}
+        HOST_GROUPNAME: ${HOST_GROUPNAME:-group}
+    tty: true
+    restart: "no"
+    entrypoint: ["python", "/app/main.py"]
+    command: ["--help"]
+    volumes:
+      - ./service/app:/app
+      - ./service/data:/data

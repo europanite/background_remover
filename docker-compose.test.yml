@@ -1,0 +1,17 @@
+services:
+  service_test:
+    build:
+      context: ./service/
+      dockerfile: Dockerfile.test
+    environment:
+      - PYTHONPATH=/
+    user: "0:0"
+    tty: false
+    restart: "no"
+    image: local/opencv-video-background-remover-test:ci
+    volumes:
+      - ./service/app:/app
+      - ./service/data:/data
+      - ./service/tests:/tests
+      - ./service/reports:/reports
+    command: ["pytest", "-q", "/tests"]
