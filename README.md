@@ -1,4 +1,4 @@
-# OpenCV Video Background Remover — GPU / Human Matting
+# Video Background Remover
 
 ## RVM colour / VLC transparency note
 
@@ -30,22 +30,6 @@ The default method is now **RVM (Robust Video Matting)** rather than MOG2. OpenC
 
 This matters for difficult footage such as **a person wearing white clothes in front of a white wall**. MOG2 and chroma-keying depend heavily on color/motion separation, while RVM predicts a human foreground and soft alpha matte.
 
-## Important fix: source display aspect ratio is restored
-
-OpenCV's decoded `frame.shape` is **not sufficient** to reconstruct every video's intended display shape. A source can store non-square pixel metadata (`SAR`), a separate display aspect ratio (`DAR`), and phone/camera rotation metadata. Earlier versions forced `SAR=1` from the OpenCV raster size, which could make the output look square or otherwise stretched.
-
-The program now uses `ffprobe` to read the source **encoded size, SAR, DAR and rotation**, asks OpenCV to honor display rotation, and then physically normalizes frames to the source display aspect using square output pixels. RVM therefore sees the correctly proportioned person, and the output no longer depends on a player honoring unusual pixel-aspect metadata.
-
-At startup you should see geometry diagnostics similar to:
-
-```text
-source geometry: encoded=180x144 sar=16:15 display_dar=4:3 rotation=0
-decoded frame: 180x144 @ 30.000 fps
-output frame: 192x144 (square pixels)
-```
-
-If a damaged source has incorrect aspect metadata, bypass this restoration with `--geometry-mode decoded`.
-
 ## Requirements
 
 - Docker + Docker Compose
@@ -64,8 +48,6 @@ docker compose \
   -f docker-compose.gpu.yml \
   build
 ```
-
-The GPU image uses `pytorch/pytorch:2.8.0-cuda12.6-cudnn9-runtime` and downloads the official RVM MobileNetV3 checkpoint during build.
 
 ## Check GPU
 
